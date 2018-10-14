@@ -1,7 +1,10 @@
 FROM microsoft/dotnet:2.1-sdk AS build
 
-COPY build_nuget_package.sh /build_scripts/
+WORKDIR /build_scripts
+COPY build.cake .
+RUN apt-get update && apt-get install unzip
+RUN curl -Lsfo Cake.CoreCLR.zip "https://www.nuget.org/api/v2/package/Cake.CoreCLR/0.30.0" && \
+    unzip -q Cake.CoreCLR.zip -d "Cake.CoreCLR" && \
+    rm Cake.CoreCLR.zip
 
-WORKDIR /app_src
-
-ENTRYPOINT ["/bin/bash", "/build_scripts/build_nuget_package.sh", "--outputDir=/output", "--testResultsDir=/test-results"]
+ENTRYPOINT ["dotnet", "/build_scripts/Cake.CoreCLR/Cake.dll", "/build_scripts/build.cake", "-workDir=/app_src", "-outputDir=/output", "-testResultsDir=/test-results"]
