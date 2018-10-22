@@ -1,5 +1,3 @@
-#addin nuget:?package=Newtonsoft.Json&version=11.0.2
-
 var target = Argument("target", "Pack");
 var nugetProject = Argument<string>("nugetProject");
 var outputDir = Argument<string>("outputDir");
@@ -23,18 +21,14 @@ Setup(context =>
 Task("GetVersionInfo")
     .Does(() =>
     {
-        StartProcess("dotnet",
-            new ProcessSettings 
-            {
-                Arguments = $"{gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs",
-                RedirectStandardOutput = true
-            },
-            out var redirectedStandardOutput
-        );
+        var result = GitVersion(new GitVersionSettings {
+            ToolPath = new FilePath("/bin/bash"),
+            ArgumentCustomization = args => 
+                args.Append("-c")
+                    .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs\"")
+        });
 
-        var json = string.Concat(redirectedStandardOutput);
-        var jObject = Newtonsoft.Json.Linq.JObject.Parse(json);
-        nugetVersion = jObject.Value<string>("NuGetVersionV2");
+        nugetVersion = result.NuGetVersionV2;
     });
 
 Task("SetPatInNugetConfigFile")
