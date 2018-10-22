@@ -1,19 +1,41 @@
+#addin nuget:?package=Newtonsoft.Json&version=11.0.2
+
 var target = Argument("target", "Pack");
-var workDir = Argument("workDir", "");
 var nugetProject = Argument<string>("nugetProject");
 var outputDir = Argument<string>("outputDir");
 var testResultsDir = Argument<string>("testResultsDir");
-var previewVersionSuffix = Argument<string>("previewVersionSuffix");
+var gitversionDllPath = Argument<string>("gitversionDllPath");
+var srcDir = Argument<string>("srcDir");
+var buildDir = Argument("buildDir", string.Empty);
 var pat = Argument("pat", string.Empty);
 
+var nugetVersion = string.Empty;
 
 Setup(context =>
 {
-    if (!string.IsNullOrEmpty(workDir))
+    if (buildDir != string.Empty)
     {
-        context.Environment.WorkingDirectory = workDir;
+        context.Environment.WorkingDirectory = buildDir;
+        CopyDirectory(new DirectoryPath(srcDir), new DirectoryPath(buildDir));
     }
 });
+
+Task("GetVersionInfo")
+    .Does(() =>
+    {
+        StartProcess("dotnet",
+            new ProcessSettings 
+            {
+                Arguments = $"{gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs",
+                RedirectStandardOutput = true
+            },
+            out var redirectedStandardOutput
+        );
+
+        var json = string.Concat(redirectedStandardOutput);
+        var jObject = Newtonsoft.Json.Linq.JObject.Parse(json);
+        nugetVersion = jObject.Value<string>("NuGetVersionV2");
+    });
 
 Task("SetPatInNugetConfigFile")
     .WithCriteria(() => FileExists("NuGet.Prod.Config"))
@@ -48,6 +70,7 @@ Task("Tests")
 
 Task("Pack")
     .IsDependentOn("Tests")
+    .IsDependentOn("GetVersionInfo")
     .Does(()=>
     {
         var projectFile = GetFiles($"src/{nugetProject}/*.csproj").Single();
@@ -55,11 +78,10 @@ Task("Pack")
         var settings = new DotNetCorePackSettings
         {
             Configuration = "Release",
-            OutputDirectory = new DirectoryPath(outputDir)
+            OutputDirectory = new DirectoryPath(outputDir),
+            ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
         };
-        DotNetCorePack(projectFile.FullPath, settings);
 
-        settings.VersionSuffix = $"preview-{previewVersionSuffix}";
         DotNetCorePack(projectFile.FullPath, settings);
     });
 

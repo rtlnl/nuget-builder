@@ -1,10 +1,17 @@
-FROM microsoft/dotnet:2.1-sdk AS build
+FROM microsoft/dotnet:2.1-sdk
 
 WORKDIR /build_scripts
+COPY GitVersion.yml /build/
 COPY build.cake .
-RUN apt-get update && apt-get install unzip
+RUN apt-get update && apt-get -y install unzip libgit2-dev && \
+    ln -s /usr/lib/x86_64-linux-gnu/libgit2.so /lib/x86_64-linux-gnu/libgit2-15e1193.so
 RUN curl -Lsfo Cake.CoreCLR.zip "https://www.nuget.org/api/v2/package/Cake.CoreCLR/0.30.0" && \
+    curl -Lsfo GitVersion.CommandLine.DotNetCore.zip "https://www.nuget.org/api/v2/package/GitVersion.CommandLine.DotNetCore/4.0.0" && \
     unzip -q Cake.CoreCLR.zip -d "Cake.CoreCLR" && \
-    rm Cake.CoreCLR.zip
+    unzip -q GitVersion.CommandLine.DotNetCore.zip -d "GitVersion.CommandLine.DotNetCore" && \
+    rm Cake.CoreCLR.zip && \
+    rm GitVersion.CommandLine.DotNetCore.zip
 
-ENTRYPOINT ["dotnet", "/build_scripts/Cake.CoreCLR/Cake.dll", "/build_scripts/build.cake", "-workDir=/app_src", "-outputDir=/output", "-testResultsDir=/test-results"]
+ENTRYPOINT ["dotnet", "/build_scripts/Cake.CoreCLR/Cake.dll", "/build_scripts/build.cake", \
+            "-srcDir=/app_src", "-buildDir=/build", "-gitversionDllPath=/build_scripts/GitVersion.CommandLine.DotNetCore/tools/GitVersion.dll", \
+            "-outputDir=/output", "-testResultsDir=/test-results"]
