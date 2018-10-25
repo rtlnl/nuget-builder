@@ -28,7 +28,24 @@ Task("GetVersionInfo")
                     .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs\"")
         });
 
-        nugetVersion = result.NuGetVersionV2;
+        nugetVersion = CorrectVersion(result.NuGetVersionV2, result.PreReleaseLabel);
+
+        string CorrectVersion(string nuGetVersionV2, string preReleaseLabel)
+        {
+            // remove not needed prefix when git is in detached head mode
+            const string prefix = "origin-";
+            if (preReleaseLabel.StartsWith(prefix))
+            {
+                var index = nuGetVersionV2.IndexOf(preReleaseLabel);
+                if (index != 0)
+                {
+                    var newLabel = preReleaseLabel.Substring(prefix.Length);
+                    return nuGetVersionV2.Substring(0, index) + newLabel + nuGetVersionV2.Substring(index + preReleaseLabel.Length);
+                }
+            }
+
+            return nuGetVersionV2;
+        }
     });
 
 Task("SetPatInNugetConfigFile")
