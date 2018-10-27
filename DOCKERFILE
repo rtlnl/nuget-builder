@@ -14,4 +14,4 @@ RUN curl -Lsfo Cake.CoreCLR.zip "https://www.nuget.org/api/v2/package/Cake.CoreC
 
 ENTRYPOINT ["dotnet", "/build_scripts/Cake.CoreCLR/Cake.dll", "/build_scripts/build.cake", \
             "-srcDir=/app_src", "-buildDir=/build", "-gitversionDllPath=/build_scripts/GitVersion.CommandLine.DotNetCore/tools/GitVersion.dll", \
-            "-outputDir=/output", "-testResultsDir=/test-results"]
+            "-outputDir=/output", "-testResultsDir=/test_results"]
