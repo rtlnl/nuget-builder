@@ -5,7 +5,6 @@ var testResultsDir = Argument<string>("testResultsDir");
 var gitversionDllPath = Argument<string>("gitversionDllPath");
 var srcDir = Argument<string>("srcDir");
 var buildDir = Argument("buildDir", string.Empty);
-var pat = Argument("pat", string.Empty);
 
 var nugetVersion = string.Empty;
 
@@ -28,25 +27,27 @@ Task("GetVersionInfo")
                     .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs\"")
         });
 
-        nugetVersion = result.NuGetVersion;
-    });
+        nugetVersion = CorrectVersion(result.FullSemVer, result.PreReleaseLabel);
 
-Task("SetPatInNugetConfigFile")
-    .WithCriteria(() => FileExists("NuGet.Prod.Config"))
-    .Does(() =>
-    {
-        if (!HasArgument("pat"))
+        string CorrectVersion(string nuGetVersionV2, string preReleaseLabel)
         {
-            throw new ArgumentException("Specify -pat argument");
-        }
+            // remove not needed prefix when git is in detached head mode
+            const string prefix = "origin-";
+            if (preReleaseLabel.StartsWith(prefix))
+            {
+                var index = nuGetVersionV2.IndexOf(preReleaseLabel);
+                if (index != 0)
+                {
+                    var newLabel = preReleaseLabel.Substring(prefix.Length);
+                    return nuGetVersionV2.Substring(0, index) + newLabel + nuGetVersionV2.Substring(index + preReleaseLabel.Length);
+                }
+            }
 
-        TransformTextFile("NuGet.Prod.Config", "$$", "$$")
-            .WithToken("PAT", pat)
-            .Save("NuGet.Config");
+            return nuGetVersionV2;
+        }
     });
 
 Task("Tests")
-    .IsDependentOn("SetPatInNugetConfigFile")
     .Does(()=>
     {
         var settings = new DotNetCoreTestSettings

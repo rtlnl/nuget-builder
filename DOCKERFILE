@@ -1,7 +1,13 @@
 FROM microsoft/dotnet:2.1-sdk
+ARG pat
 
 WORKDIR /build_scripts
+
 COPY GitVersion.yml /build/
+
+COPY NuGet.Config /build/
+RUN sed -i 's/\$\$PAT\$\$/'$pat'/g' /build/NuGet.Config
+
 COPY build.cake .
 RUN apt-get update && apt-get -y install unzip libgit2-dev && \
     ln -s /usr/lib/x86_64-linux-gnu/libgit2.so /lib/x86_64-linux-gnu/libgit2-15e1193.so
