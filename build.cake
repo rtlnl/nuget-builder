@@ -1,20 +1,21 @@
 var target = Argument("target", "Pack");
-var nugetProject = Argument<string>("nugetProject");
+var srcDir = Argument<string>("srcDir");
+var buildDir = Argument<string>("buildDir");
 var outputDir = Argument<string>("outputDir");
 var testResultsDir = Argument<string>("testResultsDir");
 var gitversionDllPath = Argument<string>("gitversionDllPath");
-var srcDir = Argument<string>("srcDir");
-var buildDir = Argument("buildDir", string.Empty);
+var nugetProject = Argument<string>("nugetProject");
+var branchName = Argument<string>("branchName");
 
 var nugetVersion = string.Empty;
 
 Setup(context =>
 {
-    if (buildDir != string.Empty)
-    {
-        context.Environment.WorkingDirectory = buildDir;
-        CopyDirectory(new DirectoryPath(srcDir), new DirectoryPath(buildDir));
-    }
+    context.Environment.WorkingDirectory = buildDir;
+    CopyDirectory(new DirectoryPath(srcDir), new DirectoryPath(buildDir));
+
+    // it's needed for GitVersion - it doesn't work well in 'detached head' state
+    StartProcess("git", new ProcessSettings{ Arguments = $"checkout {branchName}" });
 });
 
 Task("GetVersionInfo")
@@ -27,24 +28,7 @@ Task("GetVersionInfo")
                     .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs\"")
         });
 
-        nugetVersion = CorrectVersion(result.FullSemVer, result.PreReleaseLabel);
-
-        string CorrectVersion(string nuGetVersionV2, string preReleaseLabel)
-        {
-            // remove not needed prefix when git is in detached head mode
-            const string prefix = "origin-";
-            if (preReleaseLabel.StartsWith(prefix))
-            {
-                var index = nuGetVersionV2.IndexOf(preReleaseLabel);
-                if (index != 0)
-                {
-                    var newLabel = preReleaseLabel.Substring(prefix.Length);
-                    return nuGetVersionV2.Substring(0, index) + newLabel + nuGetVersionV2.Substring(index + preReleaseLabel.Length);
-                }
-            }
-
-            return nuGetVersionV2;
-        }
+        nugetVersion = result.FullSemVer;
     });
 
 Task("Tests")
@@ -75,6 +59,9 @@ Task("Pack")
             Configuration = "Release",
             OutputDirectory = new DirectoryPath(outputDir),
             ArgumentCustomization = args => args.Append($"/p:Version={nugetVersion}")
+                                                .Append($"/p:GenerateAssemblyVersionAttribute=false")
+                                                .Append($"/p:GenerateAssemblyFileVersionAttribute=false")
+                                                .Append($"/p:GenerateAssemblyInformationalVersionAttribute=false")
         };
 
         DotNetCorePack(projectFile.FullPath, settings);
