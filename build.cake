@@ -15,7 +15,9 @@ Setup(context =>
     CopyDirectory(new DirectoryPath(srcDir), new DirectoryPath(buildDir));
 
     // it's needed for GitVersion - it doesn't work well in 'detached head' state
-    StartProcess("git", new ProcessSettings{ Arguments = $"checkout {branchName}" });
+    var prefix = "refs/heads/";
+    var branch = branchName.StartsWith(prefix) ? branchName.Substring(prefix.Length) : branchName;
+    StartProcess("git", new ProcessSettings{ Arguments = $"checkout {branch}" });
 });
 
 Task("GetVersionInfo")
