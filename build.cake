@@ -54,7 +54,7 @@ Task("Pack")
     .IsDependentOn("GetVersionInfo")
     .Does(()=>
     {
-        var projectFile = GetFiles($"src/{nugetProject}/*.csproj").Single();
+        var projectFile = GetFiles($"./**/{nugetProject}.csproj").Single();
 
         var settings = new DotNetCorePackSettings
         {
