@@ -42,7 +42,7 @@ Task("Tests")
             ResultsDirectory = new DirectoryPath(testResultsDir)
         }; 
 
-        var projectFiles = GetFiles("./**/*Tests.csproj");
+        var projectFiles = GetFiles("./**/*Tests.csproj").Concat(GetFiles("./**/*Test.csproj"));
         foreach(var file in projectFiles)
         {
             DotNetCoreTest(file.FullPath, settings);
