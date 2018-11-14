@@ -23,12 +23,20 @@ Setup(context =>
 Task("GetVersionInfo")
     .Does(() =>
     {
+        var assemblyInfoFilename = "AssemblyInfo_FromGitVersion.cs";
         var result = GitVersion(new GitVersionSettings {
             ToolPath = new FilePath("/bin/bash"),
             ArgumentCustomization = args => 
                 args.Append("-c")
-                    .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo src/{nugetProject}/AssemblyInfo.cs\"")
+                    .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo {assemblyInfoFilename}\"")
         });
+
+        var projectDirectories = GetFiles($"./**/*.csproj").Select(x => x.GetDirectory());
+        var assemblyInfoFilePath = new FilePath(assemblyInfoFilename);
+        foreach(var directory in projectDirectories)
+        {
+            CopyFile(assemblyInfoFilePath, directory.CombineWithFilePath(assemblyInfoFilename));
+        }
 
         nugetVersion = result.FullSemVer;
     });
