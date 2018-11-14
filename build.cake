@@ -3,7 +3,6 @@ var srcDir = Argument<string>("srcDir");
 var buildDir = Argument<string>("buildDir");
 var outputDir = Argument<string>("outputDir");
 var testResultsDir = Argument<string>("testResultsDir");
-var gitversionDllPath = Argument<string>("gitversionDllPath");
 var nugetProject = Argument<string>("nugetProject");
 var branchName = Argument<string>("branchName");
 
@@ -28,7 +27,7 @@ Task("GetVersionInfo")
             ToolPath = new FilePath("/bin/bash"),
             ArgumentCustomization = args => 
                 args.Append("-c")
-                    .Append($"\"dotnet {gitversionDllPath} /ensureassemblyinfo /updateassemblyinfo {assemblyInfoFilename}\"")
+                    .Append($"\"/root/.dotnet/tools/dotnet-gitversion /ensureassemblyinfo /updateassemblyinfo {assemblyInfoFilename}\"")
         });
 
         var projectDirectories = GetFiles($"./**/*.csproj").Select(x => x.GetDirectory());
