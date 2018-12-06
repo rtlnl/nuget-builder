@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1-sdk
+FROM microsoft/dotnet:2.2-sdk
 ARG pat
 
 WORKDIR /build_scripts
@@ -15,7 +15,7 @@ RUN curl -Lsfo Cake.CoreCLR.zip "https://www.nuget.org/api/v2/package/Cake.CoreC
     unzip -q Cake.CoreCLR.zip -d "Cake.CoreCLR" && \
     rm Cake.CoreCLR.zip
 
-RUN dotnet tool install --global GitVersion.Tool --version 4.0.1-beta1-38
+RUN dotnet tool install --global GitVersion.Tool --version 4.0.1-beta1-50
 
 ENTRYPOINT ["dotnet", "/build_scripts/Cake.CoreCLR/Cake.dll", "/build_scripts/build.cake", \
             "-srcDir=/app_src", "-buildDir=/build", "-outputDir=/output", "-testResultsDir=/test_results"]
