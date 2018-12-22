@@ -23,11 +23,9 @@ Task("GetVersionInfo")
     .Does(() =>
     {
         var assemblyInfoFilename = "AssemblyInfo_FromGitVersion.cs";
-        var result = GitVersion(new GitVersionSettings {
-            ToolPath = new FilePath("/bin/bash"),
-            ArgumentCustomization = args => 
-                args.Append("-c")
-                    .Append($"\"/root/.dotnet/tools/dotnet-gitversion /ensureassemblyinfo /updateassemblyinfo {assemblyInfoFilename}\"")
+        var result = GitVersion(new GitVersionSettings 
+        {
+            ArgumentCustomization = args => args.Append($"/ensureassemblyinfo /updateassemblyinfo {assemblyInfoFilename}")
         });
 
         var projectDirectories = GetFiles($"./**/*.csproj").Select(x => x.GetDirectory());
