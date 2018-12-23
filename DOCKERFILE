@@ -1,16 +1,17 @@
 FROM microsoft/dotnet:2.2-sdk
 ARG pat
 
-WORKDIR /build_scripts
-COPY build.cake .
+COPY build.cake /build_scripts/build.cake
 
-COPY GitVersion.yml /build/
+WORKDIR /build
 
-COPY NuGet.Config /build/
-RUN sed -i 's/\$\$PAT\$\$/'$pat'/g' /build/NuGet.Config
+COPY GitVersion.yml .
+COPY NuGet.Config .
+
+RUN sed -i 's/\$\$PAT\$\$/'$pat'/g' NuGet.Config
 
 RUN dotnet tool install --global Cake.Tool --version 0.31.0
 RUN dotnet tool install --global GitVersion.Tool --version 4.0.1-beta1-58
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-ENTRYPOINT ["dotnet", "cake", "build.cake", "-srcDir=/app_src", "-buildDir=/build", "-outputDir=/output", "-testResultsDir=/test_results"]
+ENTRYPOINT ["dotnet", "cake", "/build_scripts/build.cake", "-srcDir=/app_src", "-outputDir=/output", "-testResultsDir=/test_results"]

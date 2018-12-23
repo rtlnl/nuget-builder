@@ -1,6 +1,5 @@
 var target = Argument("target", "Pack");
 var srcDir = Argument<string>("srcDir");
-var buildDir = Argument<string>("buildDir");
 var outputDir = Argument<string>("outputDir");
 var testResultsDir = Argument<string>("testResultsDir");
 var nugetProject = Argument<string>("nugetProject");
@@ -10,8 +9,7 @@ var nugetVersion = string.Empty;
 
 Setup(context =>
 {
-    context.Environment.WorkingDirectory = buildDir;
-    CopyDirectory(new DirectoryPath(srcDir), new DirectoryPath(buildDir));
+    CopyDirectory(new DirectoryPath(srcDir), context.Environment.WorkingDirectory);
 
     // it's needed for GitVersion - it doesn't work well in 'detached head' state
     var prefix = "refs/heads/";
