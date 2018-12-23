@@ -2,21 +2,15 @@ FROM microsoft/dotnet:2.2-sdk
 ARG pat
 
 WORKDIR /build_scripts
+COPY build.cake .
 
 COPY GitVersion.yml /build/
 
 COPY NuGet.Config /build/
 RUN sed -i 's/\$\$PAT\$\$/'$pat'/g' /build/NuGet.Config
 
-COPY build.cake .
-RUN apt-get update && apt-get -y install unzip libgit2-dev && \
-    ln -s /usr/lib/x86_64-linux-gnu/libgit2.so /lib/x86_64-linux-gnu/libgit2-15e1193.so
-RUN curl -Lsfo Cake.CoreCLR.zip "https://www.nuget.org/api/v2/package/Cake.CoreCLR/0.31.0" && \
-    unzip -q Cake.CoreCLR.zip -d "Cake.CoreCLR" && \
-    rm Cake.CoreCLR.zip
-
+RUN dotnet tool install --global Cake.Tool --version 0.31.0
 RUN dotnet tool install --global GitVersion.Tool --version 4.0.1-beta1-58
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-ENTRYPOINT ["dotnet", "/build_scripts/Cake.CoreCLR/Cake.dll", "/build_scripts/build.cake", \
-            "-srcDir=/app_src", "-buildDir=/build", "-outputDir=/output", "-testResultsDir=/test_results"]
+ENTRYPOINT ["dotnet", "cake", "build.cake", "-srcDir=/app_src", "-buildDir=/build", "-outputDir=/output", "-testResultsDir=/test_results"]
