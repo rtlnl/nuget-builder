@@ -14,4 +14,4 @@ RUN dotnet tool install --global Cake.Tool --version 0.31.0
 RUN dotnet tool install --global GitVersion.Tool --version 4.0.1-beta1-58
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-ENTRYPOINT ["dotnet", "cake", "/build_scripts/build.cake", "-srcDir=/app_src", "-outputDir=/output", "-testResultsDir=/test_results"]
+ENTRYPOINT ["dotnet", "cake", "/build_scripts/build.cake", "-srcDir=/app_src", "-buildDir=/build", "-outputDir=/output", "-testResultsDir=/test_results"]
